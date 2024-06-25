@@ -1,4 +1,4 @@
-# AutoGetPublicIP-ZTEF609
+# Auto Get Public IP - ZTEF609 ( Indihome )
 
 A Python script to automate the process of changing the WAN authentication type on an Indihome ZTEF609 router. The script changes the authentication type from Auto to PAP and back to Auto to reset the IP address, checking if the IP is public or private. If the IP is private, the script will repeat the process until a public IP is obtained, without restarting the router or disrupting the connection.
 
@@ -22,7 +22,7 @@ A Python script to automate the process of changing the WAN authentication type 
 
     ```sh
     git clone https://github.com/itsreezky/AutoGetPublicIP-ZTEF609.git
-    cd RouterIPAutoReset
+    cd AutoGetPublicIP-ZTEF609
     ```
 
 2. Install the required Python packages:
