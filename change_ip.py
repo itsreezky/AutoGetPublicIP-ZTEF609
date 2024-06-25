@@ -1,10 +1,21 @@
+# // ========================================
+# // Author: Reezky
+# // Email: its@reezky.cloud
+# // ========================================
+# // Website: https://reezky.cloud/
+# // Github: https://github.com/itsreezky
+# // LinkedIn: https://www.linkedin.com/in/itsreezky/
+# // ========================================
+# // Created Date: 25/06/2024 23:25:42
+# // ========================================
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import re
 
 # Configuration
 router_ip = 'http://192.168.1.1'
@@ -74,25 +85,30 @@ def get_public_ip_from_router():
         print(f"Error during getting public IP: {e}")
         driver.quit()
 
+# Function to check if an IP is private
+def is_private_ip(ip):
+    private_ip_patterns = [
+        re.compile(r'^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$'),
+        re.compile(r'^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}$'),
+        re.compile(r'^192\.168\.\d{1,3}\.\d{1,3}$')
+    ]
+    return any(pattern.match(ip) for pattern in private_ip_patterns)
+
 try:
     login_to_router()
 
-    current_ip = get_public_ip_from_router()
-    print(f"Current IP: {current_ip}")
-
     while True:
+        current_ip = get_public_ip_from_router()
+        print(f"Current IP: {current_ip}")
+
+        if not is_private_ip(current_ip):
+            print("Public IP obtained.")
+            break
+
         change_auth_type('PAP')  # Change to PAP
         change_auth_type('Auto')  # Change back to Auto
-
-        new_ip = get_public_ip_from_router()
-        print(f"New IP: {new_ip}")
-
-        if new_ip != current_ip:
-            print("Public IP has changed.")
-            break
 
         time.sleep(30)  # Wait a few seconds before trying again
 
 finally:
     driver.quit()
-
