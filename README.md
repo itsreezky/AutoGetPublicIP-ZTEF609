@@ -1,37 +1,52 @@
-# Automated Router Management Script Documentation
+# AutoGetPublicIP-ZTEF609
 
-This documentation provides a detailed explanation of a Python script that uses Selenium to interact with a router's web interface to perform tasks such as logging in, changing WAN authentication types, and retrieving the public IP address. The script is designed to automate these tasks and can be modified to suit different routers by adjusting the element locators and credentials as needed.
+A Python script to automate the process of changing the WAN authentication type on an Indihome ZTEF609 router. The script changes the authentication type from Auto to PAP and back to Auto to reset the IP address, checking if the IP is public or private. If the IP is private, the script will repeat the process until a public IP is obtained, without restarting the router or disrupting the connection.
 
-## Prerequisites
+## Features
+
+- Automates login to the Indihome ZTEF609 router.
+- Changes WAN authentication type from Auto to PAP and back to Auto.
+- Checks if the obtained IP is public or private.
+- Repeats the process until a public IP is obtained.
+
+## Requirements
 
 - Python 3.x
-- Selenium package
-- ChromeDriver (matching your version of Chrome)
-- Google Chrome browser
+- Selenium
+- ChromeDriver
+- Google Chrome
 
 ## Installation
 
-1. Install the necessary Python package:
-   ```sh
-   pip install selenium
-   ```
+1. Clone the repository:
 
-2. Download and install ChromeDriver from [here](https://sites.google.com/a/chromium.org/chromedriver/). Ensure it matches your installed version of Google Chrome. Place the `chromedriver` executable in a known directory (e.g., `/home/reezky/chromedriver/chromedriver-linux64/`).
+    ```sh
+    git clone https://github.com/itsreezky/AutoGetPublicIP-ZTEF609.git
+    cd RouterIPAutoReset
+    ```
+
+2. Install the required Python packages:
+
+    ```sh
+    pip install selenium
+    ```
+
+3. Download ChromeDriver and ensure it matches your installed version of Google Chrome. Place the `chromedriver` executable in the path specified in the script or update the `driver_path` variable in the script to match your ChromeDriver location.
 
 ## Configuration
 
-Before running the script, configure the following parameters:
+Update the following configuration variables in the script:
 
-- `router_ip`: The IP address of your router's web interface.
-- `username`: Your router's username.
-- `password`: Your router's password.
-- `driver_path`: The path to your `chromedriver` executable.
+- `router_ip`: The IP address of your router (default is `http://192.168.1.1`).
+- `username`: The username for logging into the router.
+- `password`: The password for logging into the router.
+- `driver_path`: The path to the ChromeDriver executable.
 
-## Script Overview
+## Code Explanation
 
-The script is divided into several functions, each responsible for a specific task:
+The script is organized into several functions to perform specific tasks:
 
-### 1. Initialization
+### Importing Required Libraries
 
 ```python
 from selenium import webdriver
@@ -40,24 +55,36 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import re
+```
 
-# Configuration
+### Configuration
+
+Update the configuration variables as needed:
+
+```python
 router_ip = 'http://192.168.1.1'
 username = 'admin'
-password = 'your_password'  # Replace with your router's username and password
-
-# Initialize browser
+password = 'your_password'
 driver_path = '/path/to/chromedriver'
+```
+
+### Initialize Browser
+
+Set up the Selenium WebDriver:
+
+```python
 service = Service(driver_path)
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
-
 driver = webdriver.Chrome(service=service, options=chrome_options)
 wait = WebDriverWait(driver, 30)
 ```
 
-### 2. Login to Router
+### Function to Login to the Router
+
+Logs into the router using the provided credentials:
 
 ```python
 def login_to_router():
@@ -65,13 +92,15 @@ def login_to_router():
         driver.get(router_ip)
         wait.until(EC.presence_of_element_located((By.NAME, 'Username'))).send_keys(username)
         wait.until(EC.presence_of_element_located((By.NAME, 'Password'))).send_keys(password)
-        wait.until(EC.element_to_be_clickable((By.ID, 'LoginId'))).click()  # Adjust ID if different
+        wait.until(EC.element_to_be_clickable((By.ID, 'LoginId'))).click()
     except Exception as e:
         print(f"Error during login: {e}")
         driver.quit()
 ```
 
-### 3. Change WAN Authentication Type
+### Function to Change the WAN Authentication Type
+
+Changes the WAN authentication type between 'Auto' and 'PAP':
 
 ```python
 def change_auth_type(auth_type):
@@ -79,24 +108,22 @@ def change_auth_type(auth_type):
         wait.until(EC.element_to_be_clickable((By.ID, 'mmNet'))).click()
         wait.until(EC.element_to_be_clickable((By.ID, 'smWANConn'))).click()
         wait.until(EC.element_to_be_clickable((By.ID, 'ssmETHWAN46Con'))).click()
-
         wan_connection = wait.until(EC.presence_of_element_located((By.ID, 'Frm_WANCName0')))
         wan_connection.click()
         wan_connection.find_element(By.XPATH, "//option[@value='IGD.WD1.WCD1.WCPPP2']").click()
-
         auth_type_element = wait.until(EC.presence_of_element_located((By.ID, 'Frm_AuthType')))
         auth_type_element.click()
         auth_type_element.find_element(By.XPATH, f"//option[@value='{auth_type}']").click()
-
         wait.until(EC.element_to_be_clickable((By.ID, 'Btn_DoEdit'))).click()
-
-        time.sleep(10)  # Wait for the changes to be applied
+        time.sleep(10)
     except Exception as e:
         print(f"Error during changing auth type: {e}")
         driver.quit()
 ```
 
-### 4. Get Public IP from Router
+### Function to Get the Public IP from the Router
+
+Fetches the current public IP from the router's status page:
 
 ```python
 def get_public_ip_from_router():
@@ -104,8 +131,7 @@ def get_public_ip_from_router():
         wait.until(EC.element_to_be_clickable((By.ID, 'mmStatu'))).click()
         wait.until(EC.element_to_be_clickable((By.ID, 'smWanStatu'))).click()
         wait.until(EC.element_to_be_clickable((By.ID, 'ssmETHWANv46Conn'))).click()
-
-        ip_element = wait.until(EC.presence_of_element_located((By.ID, 'wan_ip')))  # Adjust ID as needed
+        ip_element = wait.until(EC.presence_of_element_located((By.ID, 'wan_ip')))
         public_ip = ip_element.text.strip()
         return public_ip
     except Exception as e:
@@ -113,50 +139,67 @@ def get_public_ip_from_router():
         driver.quit()
 ```
 
-### 5. Main Execution
+### Function to Check if an IP is Private
 
-The main block of the script performs the following:
+Checks if the IP address is private:
 
-- Logs into the router.
-- Retrieves the current public IP.
-- Changes the WAN authentication type back and forth to trigger a public IP change.
-- Prints the new public IP and verifies if it has changed.
-- Repeats the process until the public IP changes, then exits.
+```python
+def is_private_ip(ip):
+    private_ip_patterns = [
+        re.compile(r'^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$'),
+        re.compile(r'^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}$'),
+        re.compile(r'^192\.168\.\d{1,3}\.\d{1,3}$')
+    ]
+    return any(pattern.match(ip) for pattern in private_ip_patterns)
+```
+
+### Main Logic
+
+The main part of the script that uses the above functions to reset the IP:
 
 ```python
 try:
     login_to_router()
-
-    current_ip = get_public_ip_from_router()
-    print(f"Current IP: {current_ip}")
-
     while True:
-        change_auth_type('PAP')  # Change to PAP
-        change_auth_type('Auto')  # Change back to Auto
-
-        new_ip = get_public_ip_from_router()
-        print(f"New IP: {new_ip}")
-
-        if new_ip != current_ip:
-            print("Public IP has changed.")
+        current_ip = get_public_ip_from_router()
+        print(f"Current IP: {current_ip}")
+        if not is_private_ip(current_ip):
+            print("Public IP obtained.")
             break
-
-        time.sleep(30)  # Wait a few seconds before trying again
-
+        change_auth_type('PAP')
+        change_auth_type('Auto')
+        time.sleep(30)
 finally:
     driver.quit()
 ```
 
-## Notes
+## Usage
 
-- Ensure the element locators (`By.ID`, `By.NAME`, `By.XPATH`, etc.) match the actual elements on your router's web interface. You may need to inspect your router's web pages and update the script accordingly.
-- The script is designed to handle exceptions and close the browser in case of an error, ensuring that the session is properly terminated.
-- Adjust the sleep durations as needed based on your router's response times.
+1. Open a terminal and navigate to the directory containing the script.
+
+2. Run the script:
+
+    ```sh
+    python change_ip.py
+    ```
+
+3. The script will log in to the router, change the WAN authentication type, and check the IP address. If the IP is private, it will repeat the process until a public IP is obtained.
+
+## Troubleshooting
+
+- Ensure that the ChromeDriver version matches your installed version of Google Chrome.
+- Verify that the `driver_path` is correctly set to the location of your ChromeDriver executable.
+- Make sure that the router's login page and elements IDs match those in the script. Adjust the script if your router's web interface has different element IDs or structure.
+
+## Disclaimer
+
+This script is provided as-is without any guarantees. Use it at your own risk. The author is not responsible for any damage or issues that may arise from using this script.
 
 ## License
 
-This script is provided "as is" without any warranty. Use it at your own risk and ensure you comply with any relevant terms of service or usage policies of your router.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+```
 
-## Author
-
-This script was created by Reezky. Feel free to contribute and improve the script by submitting issues or pull requests on GitHub.
+### Note:
+- Replace `your-username` in the clone command with your actual GitHub username.
+- Ensure that the `change_ip.py` filename matches the script's filename in your repository.
