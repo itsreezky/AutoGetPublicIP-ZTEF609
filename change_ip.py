@@ -20,10 +20,10 @@ import re
 # Configuration
 router_ip = 'http://192.168.1.1'
 username = 'admin'
-password = 'rizki21123'  # Replace with your router's username and password
+password = 'your_password'  # Replace with your router's username and password
 
 # Initialize browser
-driver_path = '/home/reezky/chromedriver/chromedriver-linux64/chromedriver'
+driver_path = '/path/to/chromedriver'
 service = Service(driver_path)
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--no-sandbox')
