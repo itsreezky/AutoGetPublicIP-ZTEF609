@@ -198,8 +198,3 @@ This script is provided as-is without any guarantees. Use it at your own risk. T
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-```
-
-### Note:
-- Replace `your-username` in the clone command with your actual GitHub username.
-- Ensure that the `change_ip.py` filename matches the script's filename in your repository.
